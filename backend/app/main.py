@@ -2,8 +2,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from .db import AsyncSessionLocal, engine
 from .models import Base, User
 from .security import hash_password
 from sqlalchemy import text
