@@ -1,17 +1,20 @@
 ﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import portfolio, orders, auth, metrics
+from .routers import portfolio, orders, auth, metrics  # 네 라우터 임포트
 
 app = FastAPI(title="Team Trading Backend")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
+    allow_origin_regex=r"^https://.*\.vercel\.app$",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/ping")
-def ping(): return {"ok": True}
+def ping():
+    return {"ok": True}
 
 app.include_router(auth.router)
 app.include_router(portfolio.router)
