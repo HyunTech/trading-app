@@ -20,12 +20,3 @@ pnpm-debug.log*
 
 # Misc
 .env
-*.db
-*.sqlite
-*.sqlite3
-.venv/
-backend/.venv/
-frontend/.next/
-node_modules/
-__pycache__/
-*.pyc
