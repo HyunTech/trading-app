@@ -1,32 +1,42 @@
 ﻿"use client";
-import { useState } from "react";
-import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-export default function Login(){
-  const [email,setEmail]=useState("admin@team.com");
-  const [password,setPassword]=useState("admin123");
-  const [err,setErr]=useState<string|null>(null);
-  const router = useRouter();
-  async function onLogin(){
+const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+
+export default function LoginPage() {
+  const r = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setErr(null);
-    try{
-      const r = await api("/auth/login", { method:"POST", body: JSON.stringify({email,password})});
-      localStorage.setItem("token", r.access_token);
-      localStorage.setItem("role", r.role);
-      router.push("/dashboard");
-    }catch(e:any){ setErr(String(e)); }
+    const res = await fetch(`${API}/auth/login`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) { setErr(await res.text()); return; }
+    const data = await res.json();
+    localStorage.setItem("token", data.access_token);
+    r.push("/dashboard");
   }
+
   return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="w-full max-w-sm bg-white p-6 rounded-2xl shadow space-y-3">
-        <h1 className="text-xl font-semibold">팀 로그인</h1>
-        <input className="border p-2 rounded w-full" value={email} onChange={e=>setEmail(e.target.value)} />
-        <input type="password" className="border p-2 rounded w-full" value={password} onChange={e=>setPassword(e.target.value)} />
-        {err && <p className="text-red-600 text-sm">{err}</p>}
-        <button className="w-full py-2 rounded bg-black text-white" onClick={onLogin}>로그인</button>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form onSubmit={onSubmit} className="bg-white p-6 rounded-2xl shadow w-[360px] space-y-3">
+        <h1 className="text-xl font-semibold mb-2">로그인</h1>
+        <input className="w-full border rounded px-3 py-2"
+               placeholder="아이디"
+               value={username} onChange={e=>setUsername(e.target.value)} />
+        <input className="w-full border rounded px-3 py-2"
+               placeholder="비밀번호" type="password"
+               value={password} onChange={e=>setPassword(e.target.value)} />
+        <button className="w-full py-2 rounded bg-black text-white">로그인</button>
+        {err && <div className="text-sm text-red-600">{String(err)}</div>}
+      </form>
     </div>
   );
 }
-

@@ -9,7 +9,7 @@ from ..security import verify_password, create_token, decode_token
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 class LoginReq(BaseModel):
-    email: str
+    username: str
     password: str
 
 async def get_db():
@@ -18,19 +18,25 @@ async def get_db():
 
 @router.post("/login")
 async def login(req: LoginReq, db: AsyncSession = Depends(get_db)):
-    user = (await db.execute(select(User).where(User.email == req.email))).scalar_one_or_none()
+    user = (await db.execute(select(User).where(User.username == req.username))).scalar_one_or_none()
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(401, "Invalid credentials")
     return {"access_token": create_token(str(user.id)), "role": user.role}
 
-def get_current_user(request: Request):
+async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)) -> User:
     auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "): raise HTTPException(401, "Missing token")
-    sub = decode_token(auth[7:])
-    return sub
+    if not auth.startswith("Bearer "):
+        raise HTTPException(401, "Missing token")
+    user_id = decode_token(auth[7:])
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user:
+        raise HTTPException(401, "User not found")
+    return user
 
-def require_role(role: str):
-    def dep(user_id = Depends(get_current_user)):
-        # 간단 버전: role 확인 생략하거나 DB 조회로 확장 가능
-        return user_id
+def require_role(required: str):
+    levels = {"viewer":0,"trader":1,"admin":2}
+    def dep(user: User = Depends(get_current_user)):
+        if levels[user.role] < levels[required]:
+            raise HTTPException(403, "Forbidden")
+        return user
     return dep
