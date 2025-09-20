@@ -6,6 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .db import AsyncSessionLocal, engine
 from .models import Base, User
 from .security import hash_password
+from sqlalchemy import text
+from .db import AsyncSessionLocal, engine
+
 
 logger = logging.getLogger("uvicorn.error")  # Render에서 보이는 로거
 
@@ -60,3 +63,8 @@ app.include_router(auth.router)
 app.include_router(portfolio.router)
 app.include_router(orders.router)
 app.include_router(metrics.router)
+
+@app.get("/debug/routes")
+def list_routes():
+    return {"routes": [r.path for r in app.routes]}
+
